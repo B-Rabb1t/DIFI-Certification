@@ -27,28 +27,28 @@ We will now create an example DIFI signal data packet in Python, without requiri
 For reference, and because the DIFI specifications are behind a pay-wall, the signal data packet structure is depicted below, using 4 bytes per line:
 
 ```
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|Pckt T.|C|Indi.| T.|TSF|Seq Num|          Packet Size          |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                           Stream ID                           |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|    Pad  |  Res|                      OUI                      |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|           Info Class          |          Packet Class         |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                      Integer Sec Timestamp                    |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                  Fractional-Seconds Timestamp                 |
-|                                                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                                               |
-|                                                               |
-|                                                               |
-|       Signal Data Payload Complex 4-16 bit signed N Words     |
-|                                                               |
-|                                                               |
-|                                                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|Pckt T.|C|Indi.| T.|TSF|Seq Num|          Packet Size          |      |0 0 0 1|1|0 0 0|TSI|1 0|Seq Num|    Packet Size = N+7 Words    |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                           Stream ID                           |      |                      Stream ID = variable                     |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|    Pad  |  Res|                      OUI                      |      | 0 0 0 0 0 0 0 0 |                 OUI = 0x6A621E              |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|           Info Class          |          Packet Class         |      |     Info Class = 0x0000     |      Packet Class = 0x0000      |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                      Integer Sec Timestamp                    |      |                      Integer Sec Timestamp                    |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  ->  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+|                  Fractional-Seconds Timestamp                 |      |                  Fractional-Seconds Timestamp                 |
+|                                                               |      |                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |      |                                                               |
+|                                                               |      |                                                               |
+|                                                               |      |                                                               |
+|       Signal Data Payload Complex 4-16 bit signed N Words     |      |       Signal Data Payload Complex 4-16 bit signed N Words     |
+|                                                               |      |                                                               |
+|                                                               |      |                                                               |
+|                                                               |      |                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 
 The following code creates a valid DIFI signal data packet, filled with repeating 1's and 0's for the IQ samples.  In the later portion of this tutorial we will create code that can parse this packet, but first we will dissect it in Wireshark.
@@ -102,7 +102,7 @@ difi_packet.extend(bytearray.fromhex(packet_timestamp))
 
 difi_packet.extend(bytearray.fromhex("0000000000000001")) # Fractional Timestamp
 
-for _ in range(0,201-7): # header is 7 words
+for _ in range(0, 201-7): # header is 7 words
     difi_packet.extend(bytearray(b'\xFF\xFF')) # 16 bits of ones
     difi_packet.extend(bytearray(b'\x00\x00')) # 16 bits of zeros
 
